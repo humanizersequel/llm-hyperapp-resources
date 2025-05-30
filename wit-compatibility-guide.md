@@ -131,10 +131,53 @@ async fn handle_update(&mut self, game_json: String) -> Result<bool, String> {
 ### 3. Build Command
 Always use `kit b --hyperapp` to check WIT generation before UI issues.
 
+## Common Compilation Errors
+
+### 1. PartialEq Missing
+**Error:** `the trait bound 'YourType: PartialEq' is not satisfied`
+
+**Fix:** Add `#[derive(PartialEq)]` to your struct:
+```rust
+#[derive(Serialize, Deserialize, PartialEq)]  // Add PartialEq
+pub struct YourType {
+    pub field: String,
+}
+```
+
+### 2. WIT Type Limitations
+**Error:** `Found types used... that are neither WIT built-ins nor defined locally`
+
+**Fix:** Use JSON string workaround:
+```rust
+// Instead of returning complex type:
+#[http]
+async fn get_state(&self) -> ComplexType { ... }
+
+// Return JSON string:
+#[http]
+async fn get_state(&self) -> String {
+    serde_json::to_string(&self.complex_data).unwrap()
+}
+```
+
+### 3. Import Conflicts with hyperprocess_macro
+**Error:** `use of undeclared crate or module`
+
+**Fix:** Check your imports - hyperprocess_macro re-exports most things:
+```rust
+// ❌ BAD: Don't import these separately
+use serde::{Serialize, Deserialize};
+use wit_bindgen;
+
+// ✅ GOOD: Use from hyperprocess_macro
+use hyperprocess_macro::{Serialize, Deserialize};
+```
+
 ## Quick Checklist
 
 Before building, ensure:
 - [ ] All struct fields are `pub`
+- [ ] All structs have `#[derive(PartialEq)]` if used in WIT
 - [ ] No HashMap, use Vec<(K,V)>
 - [ ] No fixed arrays, use Vec
 - [ ] No complex enum variants

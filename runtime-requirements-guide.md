@@ -91,3 +91,68 @@ When you run `kit b`, the build process:
 - **Production**: window.our will always be set when running in Hyperware
 
 This is why apps should gracefully handle both cases.
+
+## Build Troubleshooting
+
+### Common Build Errors and Fixes
+
+**1. "cannot find crate"**
+```rust
+// ❌ Wrong
+use serde::{Serialize, Deserialize};
+use tokio;
+
+// ✅ Right - hyperprocess_macro re-exports what you need
+use hyperprocess_macro::{Serialize, Deserialize};
+```
+
+**2. "PartialEq not satisfied"**
+```rust
+// Add PartialEq to derives
+#[derive(Serialize, Deserialize, PartialEq)]
+pub struct YourType { }
+```
+
+**3. "WIT generation failed"**
+- Return JSON strings for complex types
+- No HashMap - use Vec<(K,V)>
+- No fixed arrays - use Vec<T>
+
+**4. "Module not found" in UI**
+```bash
+# Clean install
+rm -rf ui/node_modules ui/package-lock.json
+kit bs --hyperapp
+```
+
+### Actually Needed Imports
+
+In your Rust code, you only need:
+```rust
+use hyperprocess_macro::*;
+```
+
+This gives you:
+- Serialize, Deserialize
+- #[hyperprocess], #[http], #[remote]
+- our() function
+- All WIT-compatible types
+
+Don't import:
+- serde separately
+- wit_bindgen separately
+- tokio (async is built-in)
+
+### WebSocket Handlers Don't Work Yet
+
+**Important**: #[ws] handlers are not implemented. Use HTTP polling or server-sent events instead.
+
+```rust
+// ❌ This won't work
+#[ws]
+async fn handle_ws(&self, data: String) { }
+
+// ✅ Use HTTP instead
+#[http]
+async fn poll_updates(&self) -> Vec<Update> { }
+```
