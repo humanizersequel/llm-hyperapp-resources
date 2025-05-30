@@ -2,6 +2,15 @@
 
 This guide explains how to implement peer-to-peer (node-to-node) communication in Hyperware applications.
 
+## IMPORTANT: Real-time Updates in Hyperware
+
+**DO NOT use WebSockets for node-to-node real-time updates.** Hyperware has its own internal P2P messaging system. WebSocket endpoints in the hyperprocess macro are not yet functional and should not be relied upon.
+
+For real-time game updates (e.g., player joins, moves, state changes):
+- Use Hyperware's Request API to send messages between nodes
+- Implement polling on the client side if needed
+- Use the fire-and-forget pattern (shown below) for broadcasting updates
+
 ## Key Patterns from Samchat
 
 ### 1. ProcessId Construction
